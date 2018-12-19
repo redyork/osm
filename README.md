@@ -17,6 +17,11 @@ Build OSM container:
 Next, change URLs in `init_osm_data.sh` file - set links on OSM files for the region that you're interested in.
 Also, change OSM file URL in `docker-compose.yml` file.
 
+Now run script to download OSM file and init state.txt file (it is needed for updating):
+
+    ./init_osm_data.sh
+
+
 Import OSM data:
 
     docker-compose up osmimport

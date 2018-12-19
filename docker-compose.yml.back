@@ -1,0 +1,108 @@
+version: "3.1"
+services:
+
+    postgres:
+      image: postgres:10
+      container_name: postgres
+      env_file: .env
+      volumes:
+        - ./conf/postgresql.conf:/etc/postgres/postgresql.conf
+        - ${APP_DIR}/postgres:/var/lib/postgresql/data:rw
+        - ${APP_DIR}/logs:/srv/gis/data/logs:rw
+      restart: always
+      command: postgres -c config_file=/etc/postgres/postgresql.conf
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.10
+
+    postgis:
+      image: kartoza/postgis:10.0-2.4
+      container_name: postgis
+      env_file: .env
+      environment:
+        - PGDATA=/var/lib/postgresql/data
+        - PG_HOST=10.5.0.11
+        - ALLOW_IP_RANGE=0.0.0.0/0
+      volumes:
+        #- ./conf/postgresql.conf:/etc/postgresql/10/main/postgresql.conf
+        #- ./conf/postgresql.conf:/var/lib/postgresql/10/main/postgresql.conf
+        #- ./conf/pg_hba.conf:/etc/postgresql/10/main/pg_hba.conf
+        #- ./conf/pg_hba.conf:/var/lib/postgresql/10/main/pg_hba.conf
+        - ${APP_DIR}/pgdata:/var/lib/postgresql/data:rw
+        - ${APP_DIR}/pglogs:/srv/gis/data/logs:rw
+#      restart: always
+      #command: postgres -c config_file=/etc/postgres/postgresql.conf
+      #command: /bin/sh -c "echo \"host all all 0.0.0.0/0 md5\" >> /etc/postgresql/10/main/pg_hba.conf && /start-postgis.sh"
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.11
+
+    pgserver:
+      build: pgserver
+      container_name: pgserver
+      env_file: .env
+      environment:
+        - PGDATA=/var/lib/postgresql/data
+      volumes:
+        - ./conf/init.sql:/docker-entrypoint-initdb.d/init.sql
+        - ./conf/postgresql.conf:/etc/postgresql/postgresql.conf
+        #- ./conf/postgresql.conf:/var/lib/postgresql/10/main/postgresql.conf
+        #- ./conf/pg_hba.conf:/etc/postgresql/10/main/pg_hba.conf
+        #- ./conf/pg_hba.conf:/var/lib/postgresql/10/main/pg_hba.conf
+        - ${APP_DIR}/postgres:/var/lib/postgresql/data:rw
+        - ${APP_DIR}/logs:/srv/gis/data/logs:rw
+      command: -c config_file=/etc/postgresql/postgresql.conf
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.12
+
+    pgs:
+      build: pg
+      container_name: pgs
+      env_file: .env
+      volumes:
+        #- ./conf/postgresql.conf:/etc/postgresql/10/main/postgresql.conf
+        #- ./conf/postgresql.conf:/var/lib/postgresql/10/main/postgresql.conf
+        #- ./conf/pg_hba.conf:/etc/postgresql/10/main/pg_hba.conf
+        #- ./conf/pg_hba.conf:/var/lib/postgresql/10/main/pg_hba.conf
+        - ${APP_DIR}/postgres:/var/lib/postgresql/10/main:rw
+        - ${APP_DIR}/logs:/srv/gis/data/logs:rw
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.14
+
+    osm:
+      build: osm
+      container_name: osm
+      env_file: .env
+      volumes:
+        - ${APP_DIR}/import:/srv/gis/import:rw
+        - ${APP_DIR}/tiles:/var/lib/mod_tile:rw
+     # environment:
+        #- DATABASE_URL:"postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+      command: run
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.15
+
+    osmimport:
+      build: osm
+      container_name: osm
+      env_file: .env
+      volumes:
+        - ${APP_DIR}/import:/srv/gis/import:rw
+        - ${APP_DIR}/tiles:/var/lib/mod_tile:rw
+     # environment:
+        #- DATABASE_URL:"postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
+      command: import
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.20
+
+networks:
+  dock_net:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/24
+

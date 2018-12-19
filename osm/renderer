@@ -1,0 +1,1 @@
+renderer	ALL=NOPASSWD: /usr/sbin/service renderd*

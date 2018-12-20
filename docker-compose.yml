@@ -46,12 +46,19 @@ services:
       image: cartography/osrm-backend-docker:latest
       container_name: osrm
       env_file: .env
-      volumes:
-        - ${APP_DIR}/import:/import:rw
-      command: osrm London "http://download.geofabrik.de/europe/great-britain/england/greater-london-latest.osm.pbf"
+      command: osrm London "${OSRM_URL}"
       networks:
         dock_net:
           ipv4_address: 10.5.0.25
+
+    osrm2:
+      image: cartography/osrm-backend-docker:latest
+      container_name: osrm2
+      env_file: .env
+      command: osrm London "${OSRM_URL}"
+      networks:
+        dock_net:
+          ipv4_address: 10.5.0.30
 
 networks:
   dock_net:

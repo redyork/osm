@@ -15,7 +15,7 @@ Build OSM container:
     docker-compose build
 
 Next, change URLs in `init_osm_data.sh` file - set links on OSM files for the region that you're interested in.
-Also, change OSM file URL in `docker-compose.yml` file.
+Also, change OSRM file URL in `.env` file.
 
 Now run script to download OSM file and init state.txt file (it is needed for updating):
 
@@ -73,6 +73,20 @@ Wait while import will be complete. You can check osrm container status:
 
 
 OSRM API available now at: `http://10.5.0.25:5000/route/v1/walking/-75.556521,39.746364;-75.545551,39.747228?overview=false`
+
+
+## Updating OSRM data
+
+There are 2 identical containers are used for updating OSRM data. Ones per week one of them is deleting and new one is creating.
+Containers names are: `osrm` and `osrm2` (see docker-compose.yml file). Iptables nat is using to redirect external `5000` port to actual osrm container.
+Script `osrm_update.sh` is using for it.
+
+Set docker-compose working directory (WRKDIR=/srv/gis) in script and add cron job. For example:
+
+    `30 1 * * 5 root /srv/gis/osrm_update.sh osrm osrm2`
+
+(1:30 am every friday)
+Use OSRM containers names as arguments for script. Here they are: osrm and osrm2 
 
 
 
